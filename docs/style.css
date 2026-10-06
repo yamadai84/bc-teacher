@@ -1,0 +1,183 @@
+:root {
+  --bg: #eeeeee;
+  --text: #333333;
+  --hero: #304FFE;
+  --shadow: 0 2px 5px rgba(0, 0, 0, .2);
+  --radius: 12px;
+  --item-w: min(400px, calc(100% - 32px));
+  --wide-w: min(800px, calc(100% - 32px));
+  --fs-item: 24px;
+  --fs-sub: 15px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "M PLUS 1p", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; }
+button { font: inherit; }
+
+.page { min-height: 100vh; padding-bottom: 120px; display: flex; flex-direction: column; align-items: center; }
+.loading { margin-top: 60px; color: #888; font-weight: 500; }
+
+/* ---- ヘッダー ---- */
+.hero {
+  width: 100%;
+  background: var(--hero);
+  padding: 50px 16px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.hero a { display: block; }
+.hero-logo { width: 200px; height: auto; display: block; }
+.hero-title {
+  margin: 25px 0 0;
+  color: #fff;
+  font-size: 32px; font-weight: 900; line-height: 32px;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.intro {
+  width: min(850px, calc(100% - 32px));
+  margin: 40px 0 0;
+  font-size: 20px; font-weight: 500; line-height: 36px;
+  white-space: pre-line;
+}
+
+/* ---- セクション見出し ---- */
+.heading {
+  width: var(--wide-w);
+  min-height: 50px;
+  margin-top: 45px;
+  padding: 8px 16px;
+  background: var(--c-head);
+  color: #fff;
+  font-size: var(--fs-item); font-weight: 800; line-height: 1.4;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.heading + .item, .heading + .toggle { margin-top: 15px; }
+
+/* ---- 共通アイテム ---- */
+.item {
+  width: var(--item-w);
+  margin-top: 15px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  color: #fff;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+}
+a.item:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, .22); }
+a.item:active { transform: translateY(0); opacity: .9; }
+.item-label { display: flex; flex-direction: column; min-width: 0; }
+.item-title { font-size: var(--fs-item); font-weight: 700; line-height: 1.4; white-space: pre-line; }
+.item-sub { font-size: var(--fs-sub); font-weight: 700; line-height: 1.2; white-space: pre-line; }
+.icon { width: 24px; height: 24px; flex: none; fill: currentColor; }
+
+/* ボタン（グラデーション） */
+.btn { min-height: 80px; padding: 10px 20px; background: var(--c-grad); }
+.btn .item-title { line-height: 33.6px; }
+.btn .item-sub { margin-top: -4px; }
+
+/* 画像カード */
+.card {
+  flex-direction: column; align-items: stretch; gap: 0;
+  padding: 20px;
+  border: 3px solid var(--c-accent);
+  color: var(--c-accent);
+}
+.card-img {
+  width: 100%;
+  aspect-ratio: var(--ratio, 16 / 9);
+  object-fit: cover;
+  display: block;
+  margin-bottom: 10px;
+  background: #ddd;
+}
+.card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card .item-title { line-height: 24px; }
+
+/* LINE ボタン */
+.line { padding: 20px; background: #4CAF50; border: 3px dashed var(--c-accent); }
+.line .item-title { line-height: 24px; }
+
+/* 枠ボタン */
+.outline { min-height: 70px; padding: 14px 20px; border: 3px solid var(--c-accent); color: var(--c-accent); }
+
+/* 文章 */
+.text { width: var(--item-w); margin-top: 15px; font-size: 20px; font-weight: 500; line-height: 1.6; text-align: center; white-space: pre-line; }
+
+/* ---- 開閉 ---- */
+.toggle { width: 100%; display: flex; flex-direction: column; align-items: center; }
+.toggle-btn { cursor: pointer; border: 0; text-align: left; }
+.toggle-btn .icon { transition: transform .2s; }
+.toggle.open > .toggle-btn .icon { transform: rotate(180deg); }
+.toggle-body { width: 100%; display: none; flex-direction: column; align-items: center; }
+.toggle.open > .toggle-body { display: flex; animation: fade .2s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* ---- TOP のエリアカード ---- */
+.area {
+  width: var(--item-w);
+  margin-top: 15px;
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: var(--c-area);
+  color: #fff;
+  display: block;
+  transition: transform .15s, box-shadow .15s;
+}
+.area:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, .22); }
+.area-img { width: 100%; aspect-ratio: var(--ratio, 3 / 2); object-fit: cover; border-radius: 8px; display: block; margin-bottom: 10px; background: rgba(255,255,255,.3); }
+.area-foot { display: flex; align-items: center; justify-content: space-between; }
+.area-name { font-size: 32px; font-weight: 700; line-height: 32px; }
+.area-sub { font-size: 16px; font-weight: 700; margin-left: 2px; }
+.intro + .area { margin-top: 40px; }
+
+/* ---- ログイン ---- */
+.login {
+  width: var(--item-w);
+  margin-top: 60px;
+  padding: 36px 24px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.login .icon { width: 40px; height: 40px; fill: var(--hero); }
+.login h2 { margin: 8px 0 0; font-size: 24px; font-weight: 900; letter-spacing: .08em; }
+.login p { margin: 12px 0 0; font-size: 15px; font-weight: 500; line-height: 1.6; }
+.login input {
+  width: 100%; margin-top: 20px; padding: 12px 14px;
+  font: inherit; font-size: 16px;
+  border: 2px solid #ccc; border-radius: 8px; outline: none;
+}
+.login input:focus { border-color: var(--hero); }
+.login button {
+  width: 100%; margin-top: 14px; padding: 12px;
+  border: 0; border-radius: 8px;
+  background: var(--hero); color: #fff;
+  font-size: 18px; font-weight: 800; letter-spacing: .08em; cursor: pointer;
+}
+.login button:disabled { opacity: .6; cursor: default; }
+.login .error { color: #e00; font-weight: 700; min-height: 1.6em; }
+
+.back { margin-top: 40px; color: var(--hero); font-weight: 700; font-size: 16px; }
+.logout { margin-top: 18px; background: none; border: 0; color: #888; font-size: 13px; text-decoration: underline; cursor: pointer; }
+
+/* ---- スマホ ---- */
+@media (max-width: 480px) {
+  :root { --fs-item: 20px; --fs-sub: 13px; }
+  .hero { padding: 36px 16px; }
+  .hero-logo { width: 160px; }
+  .hero-title { font-size: 24px; line-height: 30px; margin-top: 18px; }
+  .intro { font-size: 15px; line-height: 27px; margin-top: 28px; }
+  .btn { min-height: 68px; }
+  .btn .item-title { line-height: 28px; }
+  .area-name { font-size: 28px; line-height: 28px; }
+}
