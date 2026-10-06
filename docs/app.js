@@ -3,30 +3,13 @@
 
   const GAS_URL = (window.BC_CONFIG && window.BC_CONFIG.GAS_URL || '').trim();
   const DEMO = !GAS_URL && !!window.BC_SEED; // プレビュー用。公開サイトには BC_SEED を置かない
-  const PW_KEY = 'bc-teachers-pw';
-  const DATA_KEY = 'bc-teachers-data';
-  const PUBLIC_KEY = 'bc-teachers-public';
+  // 生徒用・講師用は同じドメインなので、保存キーはサイトのパスごとに分ける
+  const KEY = 'bc:' + location.pathname.replace(/index\.html$/, '') + ':';
+  const PW_KEY = KEY + 'pw';
+  const DATA_KEY = KEY + 'data';
+  const PUBLIC_KEY = KEY + 'public';
+  const LOGO = 'logo.png';
   const app = document.getElementById('app');
-
-  const THEMES = {
-    '赤':     { head: '#FF1744', grad: 'linear-gradient(90deg,#FF0844 0%,#FF6E69 100%)', accent: '#FF0000' },
-    'オレンジ': { head: '#FFAB00', grad: 'linear-gradient(90deg,#F99023 0%,#FFC257 100%)', accent: '#F99023' },
-    '緑':     { head: '#43A047', grad: 'linear-gradient(90deg,#0BA315 0%,#71D47B 100%)', accent: '#0BA315' },
-    '青':     { head: '#0091EA', grad: 'linear-gradient(90deg,#1D8FE1 0%,#67C0F9 100%)', accent: '#1D8FE1' },
-    '紫':     { head: '#7149B7', grad: 'linear-gradient(-225deg,#65379B 0%,#886AEA 53%,#6457C6 100%)', accent: '#65379B' },
-    '黄':     { head: '#FFAB00', grad: 'linear-gradient(90deg,#FFAB00 0%,#FFC44C 100%)', accent: '#FFAB00' },
-    '青紫':   { head: '#6A1B9A', grad: 'linear-gradient(135deg,#667EEA 0%,#764BA2 100%)', accent: '#764BA2' },
-  };
-  const AREA_BG = {
-    'ピンク': 'linear-gradient(90deg,#F78CA0 0%,#F9748F 19%,#FD868C 60%,#FE9A8B 100%)',
-    'ブルー': 'linear-gradient(0deg,#A3BDED 0%,#6991C7 100%)',
-  };
-
-  const ICON = {
-    play: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
-    drop: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>',
-    lock: '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>',
-  };
 
   /* ---------- ストレージ（使えない環境でも動くように） ---------- */
   const store = {
@@ -55,12 +38,14 @@
   }
   function safeHref(u) {
     u = str(u);
-    return /^(https?:|mailto:|tel:|#)/i.test(u) ? u : (u ? 'https://' + u : '#');
+    return /^(https?:|mailto:|tel:|#)/i.test(u) ? u : 'https://' + u;
   }
-  function themeVars(color) {
-    const t = THEMES[str(color)] || THEMES['赤'];
-    return `--c-head:${t.head};--c-grad:${t.grad};--c-accent:${t.accent};`;
+  // 「生徒・保護者 専用ページ」→ 末尾の「専用ページ」だけアクセント色に
+  function titleHtml(t) {
+    const m = t.match(/^(.*?)(専用ページ|ページ)$/);
+    return m && m[1] ? esc(m[1]) + '<span>' + esc(m[2]) + '</span>' : esc(t);
   }
+  function siteTitle(s) { return str(s['ヘッダー見出し']) || '専用ページ'; }
 
   /* ---------- データ取得 ---------- */
   function demoData() {
@@ -74,7 +59,7 @@
     return { settings, top: S.top ? toObjs(S.top.slice(1), S.top[0]) : [], pages };
   }
 
-  // ログイン画面用のロゴ・タイトル（パスワード不要）
+  // ログイン画面用のサイト名・見出し（パスワード不要）
   function cachedPublic() {
     try { return JSON.parse(store.get(PUBLIC_KEY) || 'null') || {}; } catch (_) { return {}; }
   }
@@ -97,42 +82,42 @@
   }
 
   /* ---------- 描画 ---------- */
-  function hero(settings, sub) {
-    const title = str(settings['ヘッダー見出し']) || '生徒・保護者 専用ページ';
-    const logo = imgUrl(settings['ロゴ画像']);
-    const color = str(settings['ヘッダー色']);
-    return `<header class="hero"${color ? ` style="background:${esc(color)}"` : ''}>
-      ${logo ? `<a href="#"><img class="hero-logo" src="${esc(logo)}" alt="Be Color"></a>` : ''}
-      <h1 class="hero-title">${esc(title)}${sub ? '\n《 ' + esc(sub) + ' 》' : ''}</h1>
-    </header>`;
+  function header(settings) {
+    return `<div class="top"><div class="rainbow"></div><header>
+      <a class="logo-link" href="#"><img class="logo" src="${LOGO}" alt="Be Color"></a>
+      <h1>${titleHtml(siteTitle(settings))}</h1>
+      ${DEMO ? '' : '<button class="ghost" type="button" data-logout>ログアウト</button>'}
+    </header></div>`;
   }
-  function intro(settings) {
+  function note(settings) {
     const t = str(settings['説明文']);
-    return t ? `<p class="intro">${esc(t)}</p>` : '';
+    return t ? `<p class="view-note">${esc(t)}</p>` : '';
   }
   function label(r) {
     const sub = str(r['サブタイトル']);
     return `<span class="item-label"><span class="item-title">${esc(str(r['タイトル']))}</span>${sub ? `<span class="item-sub">${esc(sub)}</span>` : ''}</span>`;
   }
-  function link(r, cls, inner, color) {
-    if (!str(r['リンクURL'])) return `<div class="item ${cls}" style="${themeVars(color)}">${inner}</div>`;
-    return `<a class="item ${cls}" style="${themeVars(color)}" href="${esc(safeHref(r['リンクURL']))}" target="_blank" rel="noopener">${inner}</a>`;
+  function wrap(r, cls, inner) {
+    if (!str(r['リンクURL'])) return `<div class="item ${cls}">${inner}<span class="tag">準備中</span></div>`;
+    return `<a class="item ${cls}" href="${esc(safeHref(r['リンクURL']))}" target="_blank" rel="noopener">${inner}<span class="arrow">→</span></a>`;
   }
 
-  function renderItem(r, color) {
-    const c = str(r['色']) || color;
+  function renderItem(r) {
     switch (str(r['種類'])) {
       case 'ボタン':
-        return link(r, 'btn', label(r) + ICON.play, c);
+      case '枠ボタン':
+        return wrap(r, '', label(r));
+      case 'LINEボタン':
+        return wrap(r, 'line', `<span class="tag">LINE</span>` + label(r));
       case '画像カード': {
         const src = imgUrl(r['画像URL']);
         const img = src ? `<img class="card-img" src="${esc(src)}" alt="" loading="lazy" style="--ratio:${ratio(r['画像比率'], '16 / 9')}">` : '';
-        return link(r, 'card', img + `<span class="card-foot">${label(r)}${ICON.play}</span>`, c);
+        const href = str(r['リンクURL']);
+        const foot = `<span class="card-foot">${label(r)}${href ? '<span class="arrow">→</span>' : '<span class="tag">準備中</span>'}</span>`;
+        return href
+          ? `<a class="item card" href="${esc(safeHref(href))}" target="_blank" rel="noopener">${img}${foot}</a>`
+          : `<div class="item card">${img}${foot}</div>`;
       }
-      case 'LINEボタン':
-        return link(r, 'line', label(r) + ICON.play, c);
-      case '枠ボタン':
-        return link(r, 'outline', label(r) + ICON.play, c);
       case '文章':
         return `<p class="text">${esc(str(r['タイトル']))}</p>`;
       default:
@@ -140,34 +125,44 @@
     }
   }
 
-  // シートの行 → HTML。見出しの色は次の見出しまで引き継ぎ、「開閉の中」の行は直前の開閉にまとめる
+  // シートの行 → HTML。見出しごとにカードのグリッドを作り、「開閉の中」の行は直前の開閉にまとめる
   function renderRows(rows) {
     let html = '';
-    let color = '赤';
-    let toggle = null;
-    const closeToggle = () => {
-      if (!toggle) return;
-      html += `<div class="toggle"><button class="item btn toggle-btn" type="button" style="${themeVars(toggle.color)}" aria-expanded="false">${label(toggle.row)}${ICON.drop}</button><div class="toggle-body">${toggle.body}</div></div>`;
-      toggle = null;
+    let grid = '';
+    let gridKind = '';
+    let fold = null;
+    const flushFold = () => {
+      if (!fold) return;
+      grid += `<details class="fold"><summary>${label(fold.row)}</summary><div class="fold-body grid">${fold.body}</div></details>`;
+      fold = null;
+    };
+    const flushGrid = () => {
+      flushFold();
+      if (grid) html += `<div class="grid">${grid}</div>`;
+      grid = '';
     };
 
     rows.filter(r => on(r['表示'])).forEach(r => {
       const type = str(r['種類']);
-      if (toggle && on(r['開閉の中']) && type !== '開閉' && type !== '見出し') {
-        toggle.body += renderItem(r, toggle.color);
+      if (fold && on(r['開閉の中']) && type !== '開閉' && type !== '見出し') {
+        fold.body += renderItem(r);
         return;
       }
-      closeToggle();
+      flushFold();
       if (type === '見出し') {
-        color = str(r['色']) || color;
-        html += `<h2 class="heading" style="${themeVars(color)}">${esc(str(r['タイトル']))}</h2>`;
+        flushGrid();
+        html += `<h2 class="section-title">${esc(str(r['タイトル']))}</h2>`;
       } else if (type === '開閉') {
-        toggle = { row: r, color: str(r['色']) || color, body: '' };
+        fold = { row: r, body: '' };
       } else {
-        html += renderItem(r, color);
+        // 画像カードとボタンは高さが違うので、種類が変わったら行を分ける
+        const kind = type === '画像カード' ? 'card' : 'link';
+        if (grid && kind !== gridKind && !/<\/details>$/.test(grid)) flushGrid();
+        gridKind = kind;
+        grid += renderItem(r);
       }
     });
-    closeToggle();
+    flushGrid();
     return html;
   }
 
@@ -177,55 +172,58 @@
   function areaSlug(a) {
     return str(a['URL名']) || str(a['シート名']);
   }
+  function tabs(data, current) {
+    const list = areas(data);
+    if (list.length < 2) return '';
+    return `<nav class="tabs"><a href="#"${current ? '' : ' class="active"'}>TOP</a>` +
+      list.map(a => `<a href="#${esc(encodeURIComponent(areaSlug(a)))}"${a === current ? ' class="active"' : ''}>${esc(str(a['エリア名']))}</a>`).join('') +
+      '</nav>';
+  }
 
   function renderTop(data) {
     const cards = areas(data).map(a => {
       const src = imgUrl(a['画像URL']);
-      const bg = AREA_BG[str(a['色'])] || (THEMES[str(a['色'])] || {}).grad || AREA_BG['ピンク'];
-      return `<a class="area" href="#${esc(encodeURIComponent(areaSlug(a)))}" style="--c-area:${bg}">
+      return `<a class="area" href="#${esc(encodeURIComponent(areaSlug(a)))}">
         ${src ? `<img class="area-img" src="${esc(src)}" alt="" style="--ratio:${ratio(a['画像比率'], '3 / 2')}">` : ''}
-        <span class="area-foot"><span><span class="area-name">${esc(str(a['エリア名']))}</span><span class="area-sub">${esc(str(a['サブ']))}</span></span>${ICON.play}</span>
+        <span class="area-foot"><span class="area-name">${esc(str(a['エリア名']))}</span><span class="area-sub">${esc(str(a['サブ']))}</span><span class="arrow">→</span></span>
       </a>`;
     }).join('');
-    return hero(data.settings) + intro(data.settings) + cards + logoutBtn();
+    return header(data.settings) + `<main>${tabs(data, null)}${note(data.settings)}<div class="areas">${cards}</div></main>`;
   }
 
   function renderArea(data, area) {
     const rows = (data.pages || {})[str(area['シート名'])] || [];
-    return hero(data.settings, str(area['エリア名'])) + intro(data.settings) + renderRows(rows) +
-      `<a class="back" href="#">← TOPへ戻る</a>` + logoutBtn();
+    return header(data.settings) + `<main>${tabs(data, area)}${note(data.settings)}${renderRows(rows)}</main>`;
   }
 
   // エリア分けがないサイト：トップページのシートをそのまま表示
   function renderHome(data, sheet) {
-    return hero(data.settings) + intro(data.settings) + renderRows((data.pages || {})[sheet] || []) + logoutBtn();
-  }
-
-  function logoutBtn() {
-    return DEMO ? '' : `<button class="logout" type="button" data-logout>ログアウト</button>`;
+    return header(data.settings) + `<main>${note(data.settings)}${renderRows((data.pages || {})[sheet] || [])}</main>`;
   }
 
   function renderLogin(settings, error) {
     settings = Object.assign(cachedPublic(), settings || {});
-    document.title = str(settings['サイト名']) || 'Be Color 生徒専用ページ';
-    app.innerHTML = hero(settings) + `
-      <form class="login" autocomplete="on">
-        ${ICON.lock}
-        <h2>LOG IN</h2>
-        <p>${esc(str(settings['ログイン案内文']) || '講師より共有された ログインパスワードを入力してください')}</p>
-        <input type="password" name="password" autocomplete="current-password" placeholder="パスワード" required>
-        <button type="submit">LOG IN</button>
-        <p class="error" role="alert">${esc(error || '')}</p>
-      </form>`;
-    const form = app.querySelector('form');
+    document.title = str(settings['サイト名']) || document.title;
+    app.innerHTML = `<div class="login">
+        <img class="logo" src="${LOGO}" alt="Be Color DOUBLE DUTCH SCHOOL">
+        <h1>${titleHtml(siteTitle(settings))}</h1>
+        <p>${esc(str(settings['ログイン案内文']) || 'パスワードを入力してください')}</p>
+        <form>
+          <input type="password" name="password" autocomplete="current-password" placeholder="パスワード" required>
+          <button type="submit">ログイン</button>
+          <div class="error" role="alert">${esc(error || '')}</div>
+        </form>
+      </div>`;
+    const box = app.querySelector('.login');
+    const form = box.querySelector('form');
     form.password.focus();
     if (!DEMO && !error) {
-      // 最新のロゴ・タイトルを取得して、入力中の内容はそのままにヘッダーだけ差し替える
+      // 最新の見出し・案内文を取得して、入力中の内容はそのままに差し替える
       fetchPublic().then(s => {
         if (!s || !form.isConnected) return;
-        app.querySelector('.hero').outerHTML = hero(s);
-        form.querySelector('p').textContent = str(s['ログイン案内文']) || '講師より共有された ログインパスワードを入力してください';
-        document.title = str(s['サイト名']) || 'Be Color 生徒専用ページ';
+        box.querySelector('h1').innerHTML = titleHtml(siteTitle(s));
+        box.querySelector('p').textContent = str(s['ログイン案内文']) || 'パスワードを入力してください';
+        document.title = str(s['サイト名']) || document.title;
       });
     }
     form.addEventListener('submit', async e => {
@@ -259,20 +257,13 @@
     const slug = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
     const area = slug && areas(data).find(a => areaSlug(a) === slug);
     const home = str(data.settings['トップページ']);
-    const site = str(data.settings['サイト名']) || 'Be Color 生徒専用ページ';
+    const site = str(data.settings['サイト名']) || document.title;
     document.title = area ? site + '｜' + str(area['エリア名']) : site;
     app.innerHTML = area ? renderArea(data, area) : home ? renderHome(data, home) : renderTop(data);
     window.scrollTo(0, 0);
   }
 
   app.addEventListener('click', e => {
-    const t = e.target.closest('.toggle-btn');
-    if (t) {
-      const box = t.parentElement;
-      box.classList.toggle('open');
-      t.setAttribute('aria-expanded', box.classList.contains('open'));
-      return;
-    }
     if (e.target.closest('[data-logout]')) {
       store.del(PW_KEY);
       store.del(DATA_KEY);
@@ -290,7 +281,7 @@
       return;
     }
     if (!GAS_URL) {
-      app.innerHTML = hero({}) + '<p class="loading">config.js に GAS の URL が設定されていません</p>';
+      app.innerHTML = '<p class="loading">config.js に GAS の URL が設定されていません</p>';
       return;
     }
     const pw = store.get(PW_KEY);
@@ -314,10 +305,10 @@
         const changed = !cached || JSON.stringify(cached) !== fresh;
         state.data = res.data;
         if (changed) {
-          const openIdx = [...app.querySelectorAll('.toggle')].map((t, i) => t.classList.contains('open') ? i : -1).filter(i => i >= 0);
+          const openIdx = [...app.querySelectorAll('details.fold')].map((d, i) => d.open ? i : -1).filter(i => i >= 0);
           const y = window.scrollY;
           route();
-          app.querySelectorAll('.toggle').forEach((t, i) => { if (openIdx.includes(i)) t.classList.add('open'); });
+          app.querySelectorAll('details.fold').forEach((d, i) => { if (openIdx.includes(i)) d.open = true; });
           window.scrollTo(0, y);
         }
       } else {
